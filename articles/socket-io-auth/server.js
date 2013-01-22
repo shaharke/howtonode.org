@@ -1,13 +1,13 @@
 // Imports
 var io      =   require('socket.io')
 ,   http    =   require('http')
-,   express =   require('express')
+,   express =   require('express.io')
 ,   cookie  =   require('cookie')
 ,   connect =   require('connect');
 
 
 // Create Express
-var app = express();
+var app = express().http().io();
 
 // Configure Express app with:
 // * Cookie parser
@@ -22,18 +22,13 @@ app.get('/', function (req, res) {
   res.sendfile(__dirname + '/index.html');
 });
 
-// Create HTTP server on port 3000 and register socket.io as listener
-server = http.createServer(app)
-server.listen(3000);
-io = io.listen(server);
-
 // Configure global authorization handling. handshakeData will contain
 // the request data associated with the handshake request sent by
 // the socket.io client. 'accept' is a callback function used to either
 // accept or reject the connection attempt.
 // We will use the session id (attached to a cookie) to authorize the user.
 // in this case, if the handshake contains a valid session id, the user will be authorized.
-io.set('authorization', function (handshakeData, accept) {
+app.io.set('authorization', function (handshakeData, accept) {
     // check if there's a cookie header
     if (handshakeData.headers.cookie) {
         // if there is, parse the cookie
@@ -57,7 +52,7 @@ io.set('authorization', function (handshakeData, accept) {
 }); 
 
 // upon connection, start a periodic task that emits (every 1s) the current timestamp
-io.on('connection', function (socket) {
+app.io.on('connection', function (socket) {
   var sender = setInterval(function () {
     socket.emit('data', new Date().getTime());
   }, 1000)
@@ -67,3 +62,5 @@ io.on('connection', function (socket) {
   })
   
 });
+
+app.listen(3000);
